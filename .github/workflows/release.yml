@@ -11,7 +11,6 @@ env:
 jobs:
   generate-release:
     runs-on: ubuntu-latest
-    environment: SWCS2
     permissions:
       contents: write
 
@@ -19,7 +18,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.2.2
         with:
-          fetch-depth: 0 # Access all commits/tags
+          fetch-depth: 0
 
       - name: Get latest tag and set version
         id: get_version
@@ -71,14 +70,12 @@ jobs:
           echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Release
+        id: release
+        uses: softprops/action-gh-release@v2.2.1
         with:
           tag_name: v${{ env.NEW_VERSION }}
-          release_name: v${{ env.NEW_VERSION }}
+          name: v${{ env.NEW_VERSION }}
           body: |
             **Changes:**
             ${{ env.COMMIT_MESSAGES }}
@@ -93,13 +90,5 @@ jobs:
             Please consider leaving a ⭐ if it's helpful to your server.
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1.0.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ env.PLUGIN_NAME }}-${{ env.NEW_VERSION }}.zip
-          asset_name: ${{ env.PLUGIN_NAME }}-${{ env.NEW_VERSION }}.zip
-          asset_content_type: application/zip
+          files: |
+            ./${{ env.PLUGIN_NAME }}-${{ env.NEW_VERSION }}.zip
